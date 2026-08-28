@@ -1,6 +1,6 @@
 [project]
 name = "pdfgo"
-version = "0.1.0"
+version = "0.2.0"
 description = "A simple python package for editing pdfs via command line. A light wrapper around pypdf."
 readme = "README.md"
 requires-python = ">=3.9"
