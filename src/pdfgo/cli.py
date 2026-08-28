@@ -7,8 +7,18 @@ import sys
 from pathlib import Path
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.errors import PyPdfError
 
 from pdfgo import __version__
+
+
+class PdfGoError(Exception):
+    """A user-facing error with a clear, non-traceback message."""
+
+
+def _require_pdf(path: str) -> None:
+    if not Path(path).is_file():
+        raise PdfGoError(f"file not found: {path}")
 
 
 def _write_pdf(writer: PdfWriter, output: str) -> None:
@@ -44,12 +54,20 @@ def parse_page_ranges(spec: str, num_pages: int) -> list[int]:
 def merge(inputs: list[str], output: str) -> None:
     writer = PdfWriter()
     for pdf_path in inputs:
-        writer.append(pdf_path)
+        _require_pdf(pdf_path)
+        try:
+            writer.append(pdf_path)
+        except PyPdfError as exc:
+            raise PdfGoError(f"'{pdf_path}' is not a valid PDF") from exc
     _write_pdf(writer, output)
 
 
 def split(input_path: str, output_dir: str) -> None:
-    reader = PdfReader(input_path)
+    _require_pdf(input_path)
+    try:
+        reader = PdfReader(input_path)
+    except PyPdfError as exc:
+        raise PdfGoError(f"'{input_path}' is not a valid PDF") from exc
     stem = Path(input_path).stem
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -63,7 +81,11 @@ def split(input_path: str, output_dir: str) -> None:
 
 
 def extract(input_path: str, pages: str, output: str) -> None:
-    reader = PdfReader(input_path)
+    _require_pdf(input_path)
+    try:
+        reader = PdfReader(input_path)
+    except PyPdfError as exc:
+        raise PdfGoError(f"'{input_path}' is not a valid PDF") from exc
     page_indices = parse_page_ranges(pages, len(reader.pages))
     writer = PdfWriter()
     for i in page_indices:
@@ -146,13 +168,17 @@ def run_interactive_menu() -> None:
 
 def main(argv: list[str] | None = None) -> None:
     argv = sys.argv[1:] if argv is None else argv
-    if not argv:
-        run_interactive_menu()
-        return
+    try:
+        if not argv:
+            run_interactive_menu()
+            return
 
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    dispatch(args)
+        parser = build_parser()
+        args = parser.parse_args(argv)
+        dispatch(args)
+    except PdfGoError as exc:
+        print(f"pdfgo: error: {exc}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

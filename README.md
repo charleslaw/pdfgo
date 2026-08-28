@@ -9,8 +9,33 @@ A simple python package for editing pdfs via command line. A light wrapper aroun
 
 ## Installation
 
+Since pdfgo is a command-line tool, we recommend installing it with [pipx](https://pipx.pypa.io/):
+
 ```bash
-uv pip install pdfgo
+pipx install pdfgo
+```
+
+### From source
+
+To install from source, use [uv](https://github.com/astral-sh/uv):
+
+```bash
+git clone https://github.com/charleslaw/pdfgo.git
+cd pdfgo
+uv tool install .
+```
+
+## Updating
+
+```bash
+pipx upgrade pdfgo
+```
+
+If you installed from source with `uv tool install .`, pull the latest changes and reinstall:
+
+```bash
+git pull
+uv tool install --force .
 ```
 
 ## Usage
