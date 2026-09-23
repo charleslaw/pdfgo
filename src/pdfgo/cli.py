@@ -56,7 +56,10 @@ def merge(inputs: list[str], output: str) -> None:
     for pdf_path in inputs:
         _require_pdf(pdf_path)
         try:
-            writer.append(pdf_path)
+            # Give each source file its own top-level outline entry. pypdf
+            # imports the source outline beneath this entry, preserving its
+            # existing bookmark hierarchy.
+            writer.append(pdf_path, outline_item=Path(pdf_path).name)
         except PyPdfError as exc:
             raise PdfGoError(f"'{pdf_path}' is not a valid PDF") from exc
     _write_pdf(writer, output)

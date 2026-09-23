@@ -50,6 +50,27 @@ def test_merge(tmp_path):
         assert len(reader.pages) == 2
 
 
+def test_merge_groups_source_bookmarks_under_filenames(tmp_path):
+    pdf_a = make_pdf(tmp_path / "a.pdf")
+    pdf_b = make_pdf(tmp_path / "b.pdf")
+    for pdf_path, bookmark in ((pdf_a, "A bookmark"), (pdf_b, "B bookmark")):
+        writer = PdfWriter()
+        writer.add_blank_page(width=72, height=72)
+        writer.add_outline_item(bookmark, 0)
+        with open(pdf_path, "wb") as f:
+            writer.write(f)
+
+    output = tmp_path / "merged.pdf"
+    merge([str(pdf_a), str(pdf_b)], str(output))
+
+    from pypdf import PdfReader
+
+    outline = PdfReader(str(output)).outline
+    assert [item["/Title"] for item in outline[::2]] == ["a.pdf", "b.pdf"]
+    assert [item["/Title"] for item in outline[1]] == ["A bookmark"]
+    assert [item["/Title"] for item in outline[3]] == ["B bookmark"]
+
+
 def test_split(tmp_path):
     pdf = make_pdf(tmp_path / "doc.pdf", num_pages=3)
     out_dir = tmp_path / "pages"
